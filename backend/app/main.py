@@ -2,7 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.api.v1.router import api_router
+from app.db.base import Base
+from app.db.session import engine
 
+# Create all tables on startup (Alembic backup)
+Base.metadata.create_all(bind=engine)
 
 # Create the FastAPI application
 app = FastAPI(
@@ -13,7 +17,6 @@ app = FastAPI(
     redoc_url="/redoc" if settings.DEBUG else None,
 )
 
-# Set up CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
@@ -22,25 +25,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include all API routes
 app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/")
 def root():
-    """Welcome endpoint for GabbyOS"""
     return {
         "name": settings.APP_NAME,
         "version": settings.APP_VERSION,
         "status": "operational",
         "message": "Welcome to GabbyOS - Your Personal Operating System",
-        "docs": "/docs"
+        "docs": "/docs" if settings.DEBUG else None
     }
 
 
 @app.get("/health")
 def health_check():
-    """Health check endpoint"""
     return {
         "status": "healthy",
         "environment": settings.ENVIRONMENT,
