@@ -1,29 +1,36 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import hashlib
+import secrets
 from app.config import settings
-
-
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against a hashed password"""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        salt, stored_hash = hashed_password.split(":")
+    except ValueError:
+        return False
+    
+    new_hash = hashlib.sha256(
+        (salt + plain_password).encode('utf-8')
+    ).hexdigest()
+    
+    return secrets.compare_digest(new_hash, stored_hash)
 
 
 def get_password_hash(password: str) -> str:
     """Hash a password for storing in database"""
-    return pwd_context.hash(password)
+    salt = secrets.token_hex(32)
+    hashed = hashlib.sha256(
+        (salt + password).encode('utf-8')
+    ).hexdigest()
+    return f"{salt}:{hashed}"
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """
-    Create a JWT access token.
-    This token is short-lived (default 30 minutes).
-    """
+    """Create a JWT access token"""
     to_encode = data.copy()
     
     if expires_delta:
@@ -37,23 +44,12 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
         "type": "access"
     })
     
-    encoded_jwt = jwt.encode(
-        to_encode,
-        settings.JWT_SECRET_KEY,
-        algorithm=settings.JWT_ALGORITHM
-    )
-    
-    return encoded_jwt
+    return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
 def create_refresh_token(data: dict) -> str:
-    """
-    Create a JWT refresh token.
-    This token is long-lived (default 7 days).
-    Used to get new access tokens without re-login.
-    """
+    """Create a JWT refresh token"""
     to_encode = data.copy()
-    
     expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     
     to_encode.update({
@@ -62,20 +58,11 @@ def create_refresh_token(data: dict) -> str:
         "type": "refresh"
     })
     
-    encoded_jwt = jwt.encode(
-        to_encode,
-        settings.JWT_SECRET_KEY,
-        algorithm=settings.JWT_ALGORITHM
-    )
-    
-    return encoded_jwt
+    return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
 def decode_token(token: str) -> Optional[dict]:
-    """
-    Decode and verify a JWT token.
-    Returns the payload if valid, None if invalid.
-    """
+    """Decode and verify a JWT token"""
     try:
         payload = jwt.decode(
             token,
