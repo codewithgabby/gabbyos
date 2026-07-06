@@ -1,0 +1,267 @@
+/* ─── Dashboard ─── */
+.dashboard-header {
+    margin-bottom: var(--space-xl);
+}
+
+.greeting {
+    font-size: var(--font-3xl);
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+.date-text {
+    font-size: var(--font-md);
+    color: var(--text-secondary);
+    margin-top: var(--space-xs);
+}
+
+.identity-statement {
+    margin-top: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-md);
+    color: var(--text-secondary);
+    font-style: italic;
+    border: 1px solid var(--border-secondary);
+}
+
+/* ─── Progress Bar ─── */
+.progress-section {
+    margin: var(--space-lg) 0;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--space-sm);
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+}
+
+.progress-bar {
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width var(--transition-slow);
+}
+
+/* ─── Routine Cards ─── */
+.routines-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+}
+
+.routine-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.routine-card:hover {
+    border-color: var(--text-tertiary);
+    box-shadow: var(--shadow-sm);
+}
+
+.routine-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: var(--space-sm);
+}
+
+.routine-title {
+    font-size: var(--font-md);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.routine-category {
+    font-size: var(--font-xs);
+    color: var(--text-tertiary);
+    padding: 2px 8px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+}
+
+.routine-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    margin-top: var(--space-sm);
+}
+
+.routine-meta svg {
+    width: 14px;
+    height: 14px;
+    opacity: 0.6;
+}
+
+/* ─── Status Badges ─── */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: var(--font-xs);
+    font-weight: 500;
+    transition: all var(--transition-fast);
+}
+
+.status-not_started {
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+}
+
+.status-in_progress {
+    background: var(--accent);
+    color: var(--text-inverse);
+}
+
+.status-completed {
+    background: var(--accent);
+    color: var(--text-inverse);
+}
+
+/* ─── Quote ─── */
+.daily-quote {
+    margin-top: var(--space-xl);
+    padding: var(--space-lg);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-secondary);
+}
+
+.quote-text {
+    font-size: var(--font-md);
+    color: var(--text-secondary);
+    font-style: italic;
+    line-height: 1.7;
+}
+
+.quote-author {
+    font-size: var(--font-sm);
+    color: var(--text-tertiary);
+    margin-top: var(--space-sm);
+}
+
+/* ─── Planner Grid ─── */
+.planner-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--space-sm);
+    overflow-x: auto;
+}
+
+.planner-day {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    min-height: 300px;
+    min-width: 140px;
+}
+
+.planner-day-header {
+    padding: var(--space-md);
+    font-size: var(--font-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-secondary);
+    text-align: center;
+}
+
+.planner-day-body {
+    padding: var(--space-sm);
+}
+
+.planner-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-xs);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.planner-item:hover {
+    background: var(--bg-hover);
+}
+
+.planner-empty {
+    padding: var(--space-lg) var(--space-sm);
+    text-align: center;
+    font-size: var(--font-xs);
+    color: var(--text-tertiary);
+}  
+
+/* ─── Routine Detail Card ─── */
+.routine-detail-card {
+    padding: var(--space-lg);
+}
+
+.routine-detail-card .card-body {
+    margin: var(--space-md) 0;
+}
+
+/* ─── Planner Modal ─── */
+.planner-days-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-md);
+    margin-top: var(--space-md);
+}
+
+.planner-day-section {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm);
+}
+
+.planner-day-section h4 {
+    padding: 0 var(--space-sm);
+}
+
+.checkbox-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.checkbox-list .checkbox-group {
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--font-sm);
+}
+
+.checkbox-list .checkbox-group:hover {
+    background: var(--bg-hover);
+}
+
+@media (max-width: 700px) {
+    .planner-days-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

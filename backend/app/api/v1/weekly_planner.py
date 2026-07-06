@@ -48,9 +48,10 @@ def get_plans(
     
     if year and week_number:
         plan = service.get_plan_by_week(current_user.id, year, week_number)
-        return [plan] if plan else []
+        return [_format_plan(plan)] if plan else []
     
-    return service.get_all_plans(current_user.id, skip, limit)
+    plans = service.get_all_plans(current_user.id, skip, limit)
+    return [_format_plan(p) for p in plans]
 
 
 @router.get(
@@ -65,7 +66,8 @@ def get_plan(
 ):
     """Get a weekly plan by ID with all items."""
     service = WeeklyPlannerService(db)
-    return service.get_plan(UUID(plan_id), current_user.id)
+    plan = service.get_plan(UUID(plan_id), current_user.id)
+    return _format_plan(plan)
 
 
 @router.patch(
@@ -132,3 +134,33 @@ def remove_plan_item(
     service = WeeklyPlannerService(db)
     service.remove_item(UUID(plan_id), UUID(item_id), current_user.id)
     return MessageResponse(message="Item removed from plan")
+
+
+def _format_plan(plan):
+    """Format plan with items for response"""
+    return {
+        "id": str(plan.id),
+        "user_id": str(plan.user_id),
+        "week_start_date": str(plan.week_start_date),
+        "week_end_date": str(plan.week_end_date),
+        "year": plan.year,
+        "week_number": plan.week_number,
+        "notes": plan.notes,
+        "items": [
+            {
+                "id": str(item.id),
+                "plan_id": str(item.plan_id),
+                "routine_id": str(item.routine_id),
+                "routine_title": item.routine.title if item.routine else None,
+                "routine_duration": item.routine.duration_minutes if item.routine else None,
+                "category_name": item.routine.category.name if item.routine and item.routine.category else None,
+                "day_of_week": item.day_of_week.value if hasattr(item.day_of_week, 'value') else str(item.day_of_week),
+                "custom_time": item.custom_time,
+                "sort_order": item.sort_order,
+                "created_at": str(item.created_at)
+            }
+            for item in (plan.items or [])
+        ],
+        "created_at": str(plan.created_at),
+        "updated_at": str(plan.updated_at)
+    }

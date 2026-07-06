@@ -1,0 +1,51 @@
+/* ─── GabbyOS Dark Theme ─── */
+[data-theme="dark"] {
+    /* Background */
+    --bg-primary: #0d0d0d;
+    --bg-secondary: #141414;
+    --bg-tertiary: #1a1a1a;
+    --bg-hover: #222222;
+    
+    /* Text */
+    --text-primary: #ececec;
+    --text-secondary: #999999;
+    --text-tertiary: #666666;
+    --text-inverse: #0d0d0d;
+    
+    /* Borders */
+    --border-primary: #2a2a2a;
+    --border-secondary: #222222;
+    
+    /* Accent */
+    --accent: #ffffff;
+    --accent-hover: #cccccc;
+    --accent-light: #1a1a1a;
+    
+    /* Status */
+    --success: #ffffff;
+    --warning: #999999;
+    --danger: #ffffff;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+    
+    /* Sidebar */
+    --sidebar-bg: #0a0a0a;
+    --sidebar-border: #1f1f1f;
+    --sidebar-text: #888888;
+    --sidebar-active: #ffffff;
+    --sidebar-active-bg: #1f1f1f;
+    
+    /* Cards */
+    --card-bg: #141414;
+    --card-border: #222222;
+    --card-hover: #1a1a1a;
+    
+    /* Input */
+    --input-bg: #1a1a1a;
+    --input-border: #2a2a2a;
+    --input-focus: #ffffff;
+    --input-text: #ececec;
+}
