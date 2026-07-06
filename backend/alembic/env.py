@@ -52,16 +52,17 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
-    # Get database URL from environment variable (Railway sets this)
-    database_url = os.getenv("DATABASE_URL")
+    from app.config import settings
     
-    # Railway uses postgres:// but SQLAlchemy needs postgresql://
-    if database_url and database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    # Get URL from settings (reads from .env)
+    url = settings.DATABASE_URL
     
-    # Create configuration with the database URL
+    # Fix postgres:// to postgresql:// if needed
+    if url and url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    
     configuration = config.get_section(config.config_ini_section) or {}
-    configuration["sqlalchemy.url"] = database_url
+    configuration["sqlalchemy.url"] = url
     
     connectable = engine_from_config(
         configuration,
@@ -76,7 +77,6 @@ def run_migrations_online() -> None:
 
         with context.begin_transaction():
             context.run_migrations()
-
 
 if context.is_offline_mode():
     run_migrations_offline()
