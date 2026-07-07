@@ -119,7 +119,9 @@ class AnalyticsService:
             DailyLog.user_id == user_id,
             DailyLog.log_date >= week_start,
             DailyLog.status == LogStatus.COMPLETED,
-            DailyLog.is_deleted == False
+            DailyLog.is_deleted == False,
+            Routine.is_deleted == False,
+            Category.is_deleted == False
         ).group_by(
             Category.name, Category.color
         ).order_by(
@@ -149,7 +151,8 @@ class AnalyticsService:
         ).filter(
             DailyLog.user_id == user_id,
             DailyLog.status == LogStatus.COMPLETED,
-            DailyLog.is_deleted == False
+            DailyLog.is_deleted == False,
+            Routine.is_deleted == False
         ).group_by(
             Routine.title, Category.name
         ).order_by(
@@ -177,7 +180,8 @@ class AnalyticsService:
             Category, Routine.category_id == Category.id
         ).filter(
             DailyLog.user_id == user_id,
-            DailyLog.is_deleted == False
+            DailyLog.is_deleted == False,
+            Routine.is_deleted == False
         ).group_by(
             Routine.title, Category.name
         ).order_by(

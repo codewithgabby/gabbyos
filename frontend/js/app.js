@@ -8,6 +8,17 @@ const App = {
         this.htmlCache = {};
         this.dataCache = {};
     },
+
+    async handleLogout() {
+        try {
+            await ApiClient.logout();
+        } catch (e) {
+            // Ignore errors
+        }
+        ApiClient.clearToken();
+        this.clearAllCache();
+        this.router.navigate('dashboard', true);
+    },
     
     router: {
         routes: {},
@@ -74,6 +85,8 @@ const App = {
             
             window.location.hash = page;
         },
+
+        
         
         init() {
             this.initRoutes();
