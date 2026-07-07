@@ -94,8 +94,9 @@ const Reflections = {
         };
         
         try {
-            if (this.currentReflection?.id) {
-                await ApiClient.request('PATCH', `/reflections/${this.currentReflection.id}`, data);
+            const reflectionId = this.currentReflection?.id || this.currentReflection;
+            if (reflectionId && typeof reflectionId === 'string' && reflectionId.length > 10) {
+                await ApiClient.request('PATCH', `/reflections/${reflectionId}`, data);
             } else {
                 const today = new Date().toISOString().split('T')[0];
                 await ApiClient.request('POST', '/reflections', { ...data, reflection_date: today });

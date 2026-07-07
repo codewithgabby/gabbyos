@@ -83,6 +83,21 @@ class ReflectionService:
         reflection = self.reflection_repo.get_by_date(user_id, today)
         
         if not reflection:
+            # Check if a soft-deleted one exists and restore it
+            existing = self.reflection_repo.db.query(Reflection).filter(
+                Reflection.user_id == user_id,
+                Reflection.reflection_date == today
+            ).first()
+            
+            if existing:
+                # Restore the soft-deleted reflection
+                existing.is_deleted = False
+                existing.deleted_at = None
+                self.reflection_repo.db.commit()
+                self.reflection_repo.db.refresh(existing)
+                return existing
+            
+            # Create new one
             reflection_dict = {
                 "user_id": user_id,
                 "reflection_date": today
