@@ -7,15 +7,34 @@ const Dashboard = {
         }
         
         try {
-            const data = await ApiClient.getDashboard();
-            return this.template(data);
+            const [data, streaksData] = await Promise.all([
+                ApiClient.getDashboard(),
+                ApiClient.getStreaks()
+            ]);
+            return this.template(data, streaksData);
         } catch (error) {
             return this.errorTemplate(error.message);
         }
     },
     
-    template(data) {
+    template(data, streaksData = []) {
         const { greeting, current_date, day_of_week, identity_statement, today_routines, completion_percentage, completed_count, total_count, quote } = data;
+        
+        const activeStreaks = streaksData.filter(s => s.current_streak > 0);
+        const streaksHtml = activeStreaks.length > 0 ? `
+            <div class="section-header mt-lg">
+                <h2 class="section-title">Active Streaks</h2>
+            </div>
+            <div class="cards-grid cards-grid-3 mb-lg">
+                ${activeStreaks.slice(0, 6).map(s => `
+                    <div class="card stat-card">
+                        <div class="stat-value" style="font-size:20px">${s.current_streak} ${Icons.streak}</div>
+                        <div class="stat-label">${s.routine_title || 'Routine'}</div>
+                        <div style="font-size:11px;color:var(--text-tertiary)">Best: ${s.longest_streak} days</div>
+                    </div>
+                `).join('')}
+            </div>
+        ` : '';
         
         const routinesHtml = today_routines && today_routines.length > 0 
             ? today_routines.map(r => this.routineCard(r)).join('')
@@ -51,6 +70,8 @@ const Dashboard = {
                 <div class="routines-grid">
                     ${routinesHtml}
                 </div>
+                
+                                ${streaksHtml}
                 
                 ${quote ? `
                     <div class="daily-quote">
@@ -110,7 +131,8 @@ const Dashboard = {
         
         try {
             await ApiClient.updateLog(logId, { status: newStatus });
-            App.router.navigate('dashboard');
+            App.clearAllCache();
+            App.router.navigate('dashboard', true);
         } catch (error) {
             console.error('Failed to update status:', error);
         }

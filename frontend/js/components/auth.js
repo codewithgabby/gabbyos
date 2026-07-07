@@ -15,7 +15,7 @@ const AuthPage = {
                     <h2 class="auth-title">Welcome back</h2>
                     <p class="auth-subtitle">Sign in to your personal operating system</p>
                     
-                    <form id="login-form" onsubmit="AuthPage.handleLogin(event)">
+                    <form id="login-form" onsubmit="AuthPage.handleLogin(event); return false;">
                         <div class="form-group">
                             <label class="form-label">Email</label>
                             <input type="email" class="form-input" id="login-email" placeholder="gabby@gabbyos.com" required>
@@ -39,17 +39,25 @@ const AuthPage = {
     
     async handleLogin(e) {
         e.preventDefault();
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
+        const email = document.getElementById('login-email');
+        const password = document.getElementById('login-password');
         const errorEl = document.getElementById('login-error');
+        const btn = document.querySelector('#login-form button[type="submit"]');
+        
+        if (!email || !password) return;
         
         try {
             errorEl.style.display = 'none';
-            await ApiClient.login(email, password);
-            App.router.navigate('dashboard');
+            btn.textContent = 'Signing in...';
+            btn.disabled = true;
+            await ApiClient.login(email.value, password.value);
+            App.clearAllCache();
+            App.router.navigate('dashboard', true);
         } catch (error) {
             errorEl.textContent = error.message;
             errorEl.style.display = 'block';
+            btn.textContent = 'Sign In';
+            btn.disabled = false;
         }
     },
     

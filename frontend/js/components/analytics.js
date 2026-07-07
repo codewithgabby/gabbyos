@@ -71,6 +71,31 @@ const Analytics = {
                         </div>
                     `).join('')}
                 ` : ''}
+                            ${data.top_routines && data.top_routines.length > 0 ? `
+                    <div class="section-header mt-lg"><h3>Most Completed Routines</h3></div>
+                    ${data.top_routines.map(r => `
+                        <div class="card mb-sm">
+                            <div style="display:flex;justify-content:space-between;align-items:center">
+                                <span>${r.routine}</span>
+                                <span class="tag">${r.completions} times</span>
+                            </div>
+                            <div style="font-size:11px;color:var(--text-tertiary)">${r.category || ''}</div>
+                        </div>
+                    `).join('')}
+                ` : ''}
+                
+                ${data.bottom_routines && data.bottom_routines.length > 0 ? `
+                    <div class="section-header mt-lg"><h3>Least Completed Routines</h3></div>
+                    ${data.bottom_routines.map(r => `
+                        <div class="card mb-sm">
+                            <div style="display:flex;justify-content:space-between;align-items:center">
+                                <span>${r.routine}</span>
+                                <span class="tag">${r.completions} times</span>
+                            </div>
+                            <div style="font-size:11px;color:var(--text-tertiary)">${r.category || ''}</div>
+                        </div>
+                    `).join('')}
+                ` : ''}
             </div>
         `;
     }

@@ -47,7 +47,7 @@ const Knowledge = {
         const category = this.categories.find(c => c.id === item.category_id);
         
         return `
-            <div class="card">
+            <div class="card" style="cursor:pointer" onclick="Knowledge.showDetail('${item.id}')">
                 <div class="card-header">
                     <span class="card-title">${item.title}</span>
                     <span class="tag">${statusLabels[item.status] || item.status}</span>
@@ -61,6 +61,72 @@ const Knowledge = {
                         ${category ? `Category: ${category.name}` : ''}
                         ${item.progress_percentage > 0 ? ` • Progress: ${item.progress_percentage}%` : ''}
                         ${item.priority ? ` • ${item.priority}` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+    
+    showDetail(itemId) {
+        const item = this.items.find(i => i.id === itemId);
+        if (!item) return;
+        
+        const statusLabels = {
+            'inbox': 'Inbox', 'planned': 'Planned', 'in_progress': 'In Progress',
+            'paused': 'Paused', 'completed': 'Completed', 'archived': 'Archived'
+        };
+        
+        const category = this.categories.find(c => c.id === item.category_id);
+        const modal = document.getElementById('knowledge-modal');
+        if (!modal) return;
+        
+        modal.innerHTML = `
+            <div class="modal-overlay" onclick="Knowledge.closeModal()">
+                <div class="modal" onclick="event.stopPropagation()" style="max-width:550px">
+                    <div class="modal-header">
+                        <h3 class="modal-title">${item.title}</h3>
+                        <div style="display:flex;gap:4px">
+                            <button class="btn btn-ghost btn-sm" onclick="Knowledge.showEditForm('${item.id}')" title="Edit">
+                                ${Icons.edit}
+                            </button>
+                            <button class="btn btn-ghost btn-sm" onclick="Knowledge.deleteItem('${item.id}')" title="Delete">
+                                ${Icons.trash}
+                            </button>
+                            <button class="modal-close" onclick="Knowledge.closeModal()">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:16px">
+                        <span class="tag">${statusLabels[item.status] || item.status}</span>
+                        ${category ? `<span class="tag" style="margin-left:4px">${category.name}</span>` : ''}
+                        ${item.priority ? `<span class="tag" style="margin-left:4px">${item.priority}</span>` : ''}
+                    </div>
+                    ${item.description ? `<p class="text-secondary mb-md">${item.description}</p>` : ''}
+                    ${item.tags && item.tags.length ? `
+                        <div class="tag-list mb-md">${item.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+                    ` : ''}
+                    ${item.source_link ? `
+                        <p class="mb-md"><a href="${item.source_link}" target="_blank" style="color:var(--accent)">Source Link</a></p>
+                    ` : ''}
+                    ${item.notes ? `
+                        <div class="card mb-md" style="background:var(--bg-secondary)">
+                            <p style="white-space:pre-wrap;font-size:13px">${item.notes}</p>
+                        </div>
+                    ` : ''}
+                    <div class="progress-section mb-md">
+                        <div class="progress-label">
+                            <span>Progress</span><span>${item.progress_percentage || 0}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width:${item.progress_percentage || 0}%"></div>
+                        </div>
+                    </div>
+                    <div class="card-footer" style="border-top:none;padding-top:0;gap:8px">
+                        <input type="range" min="0" max="100" value="${item.progress_percentage || 0}" 
+                            onchange="Knowledge.updateProgress('${item.id}', this.value)" 
+                            style="flex:1;accent-color:var(--accent)">
+                        <button class="btn btn-ghost btn-sm" onclick="Knowledge.closeModal()">Close</button>
                     </div>
                 </div>
             </div>
@@ -147,7 +213,93 @@ const Knowledge = {
         try {
             await ApiClient.createKnowledge(data);
             Knowledge.closeModal();
-            App.router.navigate('knowledge');
+            App.clearAllCache();
+            App.router.navigate('knowledge', true);
+        } catch (error) {
+            alert(error.message);
+        }
+    },
+
+    showEditForm(itemId) {
+        const item = this.items.find(i => i.id === itemId);
+        if (!item) return;
+        
+        const modal = document.getElementById('knowledge-modal');
+        const categoryOptions = this.categories.map(c => `<option value="${c.id}" ${item.category_id === c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+        const statusOptions = ['inbox','planned','in_progress','paused','completed','archived']
+            .map(s => `<option value="${s}" ${item.status === s ? 'selected' : ''}>${s.replace('_',' ')}</option>`).join('');
+        
+        modal.innerHTML = `
+            <div class="modal-overlay" onclick="Knowledge.closeModal()">
+                <div class="modal" onclick="event.stopPropagation()">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Edit Item</h3>
+                        <button class="modal-close" onclick="Knowledge.closeModal()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                    <form onsubmit="Knowledge.handleEdit(event, '${item.id}')">
+                        <div class="form-group"><label class="form-label">Title</label><input type="text" class="form-input" id="ke-title" value="${item.title || ''}" required></div>
+                        <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="ke-desc" value="${item.description || ''}"></div>
+                        <div class="form-group"><label class="form-label">Category</label><select class="form-select" id="ke-category"><option value="">None</option>${categoryOptions}</select></div>
+                        <div class="form-group"><label class="form-label">Tags</label><input type="text" class="form-input" id="ke-tags" value="${(item.tags || []).join(', ')}"></div>
+                        <div class="form-group"><label class="form-label">Priority</label><select class="form-select" id="ke-priority"><option value="low" ${item.priority==='low'?'selected':''}>Low</option><option value="medium" ${item.priority==='medium'?'selected':''}>Medium</option><option value="high" ${item.priority==='high'?'selected':''}>High</option></select></div>
+                        <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="ke-status">${statusOptions}</select></div>
+                        <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="ke-notes">${item.notes || ''}</textarea></div>
+                        <div class="form-group"><label class="form-label">Source Link</label><input type="url" class="form-input" id="ke-link" value="${item.source_link || ''}"></div>
+                        <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        `;
+    },
+    
+    async handleEdit(e, itemId) {
+        e.preventDefault();
+        const tagsStr = document.getElementById('ke-tags').value;
+        
+        const data = {
+            title: document.getElementById('ke-title').value,
+            description: document.getElementById('ke-desc').value,
+            category_id: document.getElementById('ke-category').value || null,
+            tags: tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [],
+            priority: document.getElementById('ke-priority').value,
+            status: document.getElementById('ke-status').value,
+            notes: document.getElementById('ke-notes').value,
+            source_link: document.getElementById('ke-link').value || null
+        };
+        
+        try {
+            await ApiClient.request('PATCH', `/knowledge/${itemId}`, data);
+            Knowledge.closeModal();
+            App.clearAllCache();
+            App.router.navigate('knowledge', true);
+        } catch (error) {
+            alert(error.message);
+        }
+    },
+    
+    async deleteItem(itemId) {
+        if (confirm('Delete this knowledge item?')) {
+            try {
+                await ApiClient.request('DELETE', `/knowledge/${itemId}`);
+                Knowledge.closeModal();
+                App.clearAllCache();
+                App.router.navigate('knowledge', true);
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+    },
+    
+    async updateProgress(itemId, progress) {
+        try {
+            await ApiClient.request('PATCH', `/knowledge/${itemId}/progress?progress=${progress}`);
+            // Update local data
+            const item = this.items.find(i => i.id === itemId);
+            if (item) item.progress_percentage = parseFloat(progress);
+            // Refresh the detail view
+            this.showDetail(itemId);
         } catch (error) {
             alert(error.message);
         }

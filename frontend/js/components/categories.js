@@ -14,15 +14,18 @@ const Categories = {
     
     template() {
         const catsHtml = this.categories.length > 0
-            ? this.categories.map(c => `
-                <div class="card">
+                ? this.categories.map(c => `
+                <div class="card" style="cursor:pointer">
                     <div class="card-header">
-                        <div style="display:flex;align-items:center;gap:8px">
+                        <div style="display:flex;align-items:center;gap:8px;flex:1" onclick="Categories.showEditForm('${c.id}')">
                             <span style="width:12px;height:12px;border-radius:3px;background:${c.color || '#000'};display:inline-block"></span>
                             <span class="card-title">${c.name}</span>
                         </div>
+                        <button class="btn btn-ghost btn-sm" onclick="Categories.deleteCategory('${c.id}')" title="Delete">
+                            ${Icons.trash}
+                        </button>
                     </div>
-                    ${c.description ? `<p class="card-subtitle">${c.description}</p>` : ''}
+                    ${c.description ? `<p class="card-subtitle" onclick="Categories.showEditForm('${c.id}')">${c.description}</p>` : ''}
                 </div>
             `).join('')
             : '<div class="empty-state" style="grid-column:1/-1"><h3>No categories yet</h3><p>Create categories to organize your life.</p></div>';
@@ -74,9 +77,66 @@ const Categories = {
         try {
             await ApiClient.createCategory(data);
             Categories.closeModal();
-            App.router.navigate('categories');
+            App.clearAllCache();
+            App.router.navigate('categories', true);
         } catch (error) {
             alert(error.message);
+        }
+    },
+
+    showEditForm(catId) {
+        const cat = this.categories.find(c => c.id === catId);
+        if (!cat) return;
+        
+        const modal = document.getElementById('category-modal');
+        if (!modal) return;
+        
+        modal.innerHTML = `
+            <div class="modal-overlay" onclick="Categories.closeModal()">
+                <div class="modal" onclick="event.stopPropagation()">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Edit Category</h3>
+                        <button class="modal-close" onclick="Categories.closeModal()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                    <form onsubmit="Categories.handleEdit(event, '${cat.id}')">
+                        <div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="ce-name" value="${cat.name || ''}" required></div>
+                        <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="ce-desc" value="${cat.description || ''}"></div>
+                        <div class="form-group"><label class="form-label">Color</label><input type="color" class="form-input" id="ce-color" value="${cat.color || '#000'}" style="height:40px;padding:4px"></div>
+                        <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        `;
+    },
+    
+    async handleEdit(e, catId) {
+        e.preventDefault();
+        const data = {
+            name: document.getElementById('ce-name').value,
+            description: document.getElementById('ce-desc').value,
+            color: document.getElementById('ce-color').value
+        };
+        try {
+            await ApiClient.request('PATCH', `/categories/${catId}`, data);
+            Categories.closeModal();
+            App.clearAllCache();
+            App.router.navigate('categories', true);
+        } catch (error) {
+            alert(error.message);
+        }
+    },
+    
+    async deleteCategory(catId) {
+        if (confirm('Delete this category? Routines using it will become uncategorized.')) {
+            try {
+                await ApiClient.request('DELETE', `/categories/${catId}`);
+                App.clearAllCache();
+                App.router.navigate('categories', true);
+            } catch (error) {
+                alert(error.message);
+            }
         }
     },
     

@@ -197,7 +197,8 @@ const Planner = {
             // Create new plan
             await ApiClient.request('POST', '/planner', data);
             Planner.closeModal();
-            App.router.navigate('planner');
+            App.clearAllCache();
+            App.router.navigate('planner', true);
         } catch (error) {
             // If 409 Conflict, it means delete didn't work - force retry
             if (error.message.includes('409') || error.message.includes('already exists')) {
@@ -206,8 +207,9 @@ const Planner = {
                         await ApiClient.request('DELETE', `/planner/${this.currentPlan.id}`);
                     }
                     await ApiClient.request('POST', '/planner', data);
-                    Planner.closeModal();
-                    App.router.navigate('planner');
+            Planner.closeModal();
+            App.clearAllCache();
+            App.router.navigate('planner', true);
                     return;
                 } catch(e) {
                     alert('Failed to save. Please refresh and try again.');
@@ -223,9 +225,9 @@ const Planner = {
         if (confirm('Remove this routine from the plan?')) {
             try {
                 await ApiClient.request('DELETE', `/planner/${this.currentPlan.id}/items/${itemId}`);
-                // Reset currentPlan to force fresh fetch
-                this.currentPlan = null;
-                App.router.navigate('planner');
+                // Force full refresh by clearing cache and navigating
+                App.clearAllCache();
+                App.router.navigate('planner', true);
             } catch (error) {
                 alert(error.message);
             }

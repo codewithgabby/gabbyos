@@ -4,9 +4,11 @@ const API_BASE = 'https://gabbyos-production.up.railway.app/api/v1';
 
 const ApiClient = {
     token: null,
+    refreshToken: null,
     
     init() {
         this.token = localStorage.getItem('gabbyos-token');
+        this.refreshToken = localStorage.getItem('gabbyos-refresh');
     },
     
     setToken(token) {
@@ -14,11 +16,18 @@ const ApiClient = {
         localStorage.setItem('gabbyos-token', token);
     },
     
-    clearToken() {
-        this.token = null;
-        localStorage.removeItem('gabbyos-token');
+    setRefreshToken(token) {
+        this.refreshToken = token;
+        localStorage.setItem('gabbyos-refresh', token);
     },
     
+    clearToken() {
+        this.token = null;
+        this.refreshToken = null;
+        localStorage.removeItem('gabbyos-token');
+        localStorage.removeItem('gabbyos-refresh');
+    },
+
     isAuthenticated() {
         return !!this.token;
     },
@@ -39,7 +48,26 @@ const ApiClient = {
             options.body = JSON.stringify(data);
         }
         
-        const response = await fetch(url, options);
+        let response = await fetch(url, options);
+        
+        // If 401, try refreshing token
+        if (response.status === 401 && this.refreshToken) {
+            try {
+                const refreshData = await fetch(`${API_BASE}/auth/refresh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh_token: this.refreshToken })
+                }).then(r => r.json());
+                
+                this.setToken(refreshData.access_token);
+                headers['Authorization'] = `Bearer ${this.token}`;
+                response = await fetch(url, { ...options, headers });
+            } catch (e) {
+                this.clearToken();
+                App.router.navigate('dashboard');
+                throw new Error('Session expired. Please login again.');
+            }
+        }
         
         if (!response.ok) {
             const error = await response.json().catch(() => ({ detail: 'Request failed' }));
@@ -59,6 +87,7 @@ const ApiClient = {
     async login(email, password) {
         const data = await this.request('POST', '/auth/login', { email, password });
         this.setToken(data.access_token);
+        this.setRefreshToken(data.refresh_token);
         return data;
     },
     
