@@ -138,6 +138,9 @@ def remove_plan_item(
 
 def _format_plan(plan):
     """Format plan with items for response"""
+    # Filter out soft-deleted items
+    active_items = [item for item in (plan.items or []) if not item.is_deleted]
+    
     return {
         "id": str(plan.id),
         "user_id": str(plan.user_id),
@@ -159,7 +162,7 @@ def _format_plan(plan):
                 "sort_order": item.sort_order,
                 "created_at": str(item.created_at)
             }
-            for item in (plan.items or [])
+            for item in active_items
         ],
         "created_at": str(plan.created_at),
         "updated_at": str(plan.updated_at)

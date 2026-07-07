@@ -6,6 +6,10 @@ const Planner = {
         if (!ApiClient.isAuthenticated()) return AuthPage.render();
         
         try {
+            // Always reset to force fresh fetch
+            this.currentPlan = null;
+            this.routines = [];
+            
             this.routines = await ApiClient.getRoutines({ is_active: 'true' });
             this.currentPlan = await this.getCurrentWeekPlan();
             return this.template();
@@ -19,10 +23,9 @@ const Planner = {
             const today = new Date();
             const year = today.getFullYear();
             const weekNumber = this.getWeekNumber(today);
-            const plans = await ApiClient.request('GET', `/planner?year=${year}&week_number=${weekNumber}`);
-            console.log('Plans received:', plans);
+            // Add timestamp to prevent caching
+            const plans = await ApiClient.request('GET', `/planner?year=${year}&week_number=${weekNumber}&_t=${Date.now()}`);
             if (plans && plans.length > 0) {
-                console.log('Items in plan:', plans[0].items);
                 return plans[0];
             }
             return null;
@@ -174,30 +177,44 @@ const Planner = {
             }
         });
         
+        const data = {
+            week_start_date: weekDates[0],
+            week_end_date: weekDates[6],
+            year: year,
+            week_number: weekNumber,
+            notes: document.getElementById('plan-notes')?.value || '',
+            items: items
+        };
+        
         try {
-            // Try to delete old plan if exists
             if (this.currentPlan) {
-                try {
-                    await ApiClient.request('DELETE', `/planner/${this.currentPlan.id}`);
-                } catch(e) {
-                    // Ignore if already deleted
-                }
+                // Delete existing plan
+                await ApiClient.request('DELETE', `/planner/${this.currentPlan.id}`);
+                // Small delay to ensure deletion completes
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
             
-            const data = {
-                week_start_date: weekDates[0],
-                week_end_date: weekDates[6],
-                year: year,
-                week_number: weekNumber,
-                notes: document.getElementById('plan-notes')?.value || '',
-                items: items
-            };
-            
+            // Create new plan
             await ApiClient.request('POST', '/planner', data);
             Planner.closeModal();
             App.router.navigate('planner');
         } catch (error) {
-            alert(error.message);
+            // If 409 Conflict, it means delete didn't work - force retry
+            if (error.message.includes('409') || error.message.includes('already exists')) {
+                try {
+                    if (this.currentPlan) {
+                        await ApiClient.request('DELETE', `/planner/${this.currentPlan.id}`);
+                    }
+                    await ApiClient.request('POST', '/planner', data);
+                    Planner.closeModal();
+                    App.router.navigate('planner');
+                    return;
+                } catch(e) {
+                    alert('Failed to save. Please refresh and try again.');
+                }
+            } else {
+                alert(error.message);
+            }
         }
     },
     
@@ -206,6 +223,8 @@ const Planner = {
         if (confirm('Remove this routine from the plan?')) {
             try {
                 await ApiClient.request('DELETE', `/planner/${this.currentPlan.id}/items/${itemId}`);
+                // Reset currentPlan to force fresh fetch
+                this.currentPlan = null;
                 App.router.navigate('planner');
             } catch (error) {
                 alert(error.message);
