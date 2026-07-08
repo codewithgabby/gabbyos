@@ -78,35 +78,31 @@ class ReflectionService:
         self.reflection_repo.soft_delete(reflection.id)
     
     def get_or_create_today(self, user_id: UUID) -> Reflection:
-        """Get today's reflection or return existing one (never fails)"""
+        """Get today's reflection or create empty one"""
         today = date.today()
         
-        # Search WITHOUT is_deleted filter - find ANY reflection for today
-        existing = self.reflection_repo.db.query(Reflection).filter(
+        # Get ALL reflections for today (including soft-deleted)
+        all_reflections = self.reflection_repo.db.query(Reflection).filter(
             Reflection.user_id == user_id,
             Reflection.reflection_date == today
-        ).first()
+        ).all()
         
-        if existing:
-            # If it was soft-deleted, restore it
-            if existing.is_deleted:
-                existing.is_deleted = False
-                existing.deleted_at = None
-                self.reflection_repo.db.commit()
-                self.reflection_repo.db.refresh(existing)
-            return existing
+        # If we have any, return the first active one
+        for r in all_reflections:
+            if not r.is_deleted:
+                return r
         
-        # Create new - this should never fail since we checked above
-        try:
-            reflection_dict = {
-                "user_id": user_id,
-                "reflection_date": today
-            }
-            return self.reflection_repo.create(reflection_dict)
-        except Exception:
-            # Last resort - rollback and fetch whatever exists
-            self.reflection_repo.db.rollback()
-            return self.reflection_repo.db.query(Reflection).filter(
-                Reflection.user_id == user_id,
-                Reflection.reflection_date == today
-            ).first()
+        # If all are soft-deleted, restore the first one
+        if all_reflections:
+            r = all_reflections[0]
+            r.is_deleted = False
+            r.deleted_at = None
+            self.reflection_repo.db.commit()
+            self.reflection_repo.db.refresh(r)
+            return r
+        
+        # Create new one
+        return self.reflection_repo.create({
+            "user_id": user_id,
+            "reflection_date": today
+        })
