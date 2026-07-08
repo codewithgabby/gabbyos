@@ -78,48 +78,35 @@ class ReflectionService:
         self.reflection_repo.soft_delete(reflection.id)
     
     def get_or_create_today(self, user_id: UUID) -> Reflection:
-        """Get today's reflection or create empty one"""
+        """Get today's reflection or return existing one (never fails)"""
         today = date.today()
         
-        # First check for active reflection
-        reflection = self.reflection_repo.get_by_date(user_id, today)
-        if reflection:
-            return reflection
+        # Search WITHOUT is_deleted filter - find ANY reflection for today
+        existing = self.reflection_repo.db.query(Reflection).filter(
+            Reflection.user_id == user_id,
+            Reflection.reflection_date == today
+        ).first()
         
-        # Check if a soft-deleted one exists
-        try:
-            existing = self.reflection_repo.db.query(Reflection).filter(
-                Reflection.user_id == user_id,
-                Reflection.reflection_date == today
-            ).first()
-            
-            if existing:
-                # Restore it
+        if existing:
+            # If it was soft-deleted, restore it
+            if existing.is_deleted:
                 existing.is_deleted = False
                 existing.deleted_at = None
-                existing.wins = None
-                existing.challenges = None
-                existing.gratitude = None
-                existing.tomorrow_focus = None
-                existing.mood_rating = None
                 self.reflection_repo.db.commit()
                 self.reflection_repo.db.refresh(existing)
-                return existing
-        except:
-            pass
+            return existing
         
-        # Create new one
+        # Create new - this should never fail since we checked above
         try:
             reflection_dict = {
                 "user_id": user_id,
                 "reflection_date": today
             }
-            reflection = self.reflection_repo.create(reflection_dict)
-            return reflection
-        except Exception as e:
-            # If duplicate, try fetching one more time
+            return self.reflection_repo.create(reflection_dict)
+        except Exception:
+            # Last resort - rollback and fetch whatever exists
             self.reflection_repo.db.rollback()
-            reflection = self.reflection_repo.get_by_date(user_id, today)
-            if reflection:
-                return reflection
-            raise e
+            return self.reflection_repo.db.query(Reflection).filter(
+                Reflection.user_id == user_id,
+                Reflection.reflection_date == today
+            ).first()

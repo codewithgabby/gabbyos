@@ -23,7 +23,7 @@
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <nav class="sidebar" id="sidebar">
-            <div class="sidebar-header">
+                        <div class="sidebar-header">
                 <div class="logo">
                     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
                         <rect width="28" height="28" rx="8" fill="currentColor"/>
@@ -31,6 +31,9 @@
                     </svg>
                     <span class="logo-text">GabbyOS</span>
                 </div>
+                <button class="mobile-menu-toggle" id="mobile-menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('sidebar-open')" style="display:none;background:none;border:none;color:var(--sidebar-text);cursor:pointer">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
             </div>
             
             <div class="sidebar-nav">
