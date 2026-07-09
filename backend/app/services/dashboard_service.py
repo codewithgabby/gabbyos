@@ -1,4 +1,4 @@
-from datetime import date, datetime
+
 from typing import List
 from uuid import UUID
 from sqlalchemy.orm import Session
@@ -8,6 +8,7 @@ from app.models.routine import Routine
 from app.core.constants import LogStatus
 from app.schemas.dashboard import TodayRoutine
 import calendar
+from datetime import date, datetime, timedelta, timezone
 
 
 class DashboardService:
@@ -18,7 +19,9 @@ class DashboardService:
     
     def get_today_dashboard(self, user_id: UUID) -> dict:
         """Build the complete today dashboard"""
-        today = date.today()
+        # Use Nigeria timezone (UTC+1)
+        nigeria_tz = timezone(timedelta(hours=1))
+        today = datetime.now(nigeria_tz).date()
         day_name = calendar.day_name[today.weekday()]
         
         # Get user
@@ -37,7 +40,7 @@ class DashboardService:
         percentage = (len(completed) / total * 100) if total > 0 else 0
         
         # Get greeting based on time
-        hour = datetime.now().hour
+        hour = datetime.now(nigeria_tz).hour
         if hour < 12:
             greeting = "Good Morning"
         elif hour < 17:

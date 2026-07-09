@@ -6,7 +6,7 @@ from app.models.reflection import Reflection
 from app.schemas.reflection import ReflectionCreate, ReflectionUpdate
 from app.repositories.reflection_repository import ReflectionRepository
 from app.core.exceptions import NotFoundException, AlreadyExistsException
-
+from datetime import date, datetime, timedelta, timezone
 
 class ReflectionService:
     """Service for reflection operations"""
@@ -79,7 +79,8 @@ class ReflectionService:
     
     def get_or_create_today(self, user_id: UUID) -> Reflection:
         """Get today's reflection or create empty one"""
-        today = date.today()
+        nigeria_tz = timezone(timedelta(hours=1))
+        today = datetime.now(nigeria_tz).date()
         
         # Get ALL reflections for today (including soft-deleted)
         all_reflections = self.reflection_repo.db.query(Reflection).filter(
