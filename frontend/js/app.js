@@ -35,6 +35,7 @@ const App = {
                 'categories': Categories,
                 'analytics': Analytics,
                 'inbox': Inbox,
+                'guide': Guide,
             };
         },
         
